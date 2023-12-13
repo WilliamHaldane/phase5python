@@ -285,25 +285,25 @@ def createNewEmployee(reservationConnection):
 def deleteAdmin(reservationConnection):
     cursor = reservationConnection.cursor()
 
-    deletedEiD = int(input("Please enter the employeeID of the admin you wish to delete: "))
-    findQuery = "SELECT * FROM Employee WHERE employeeID = %s"
+    deletedEiD = int(input("Please enter the administratorID of the admin you wish to delete: "))
+    findQuery = "SELECT * FROM Administrator WHERE administratorID = %s"
 
     cursor.execute(findQuery(deletedEiD))
-    employee = cursor.fetchall()
+    admin = cursor.fetchall()
 
-    if not employee:
-        print("Sorry, no employee matching that ID was found.")
+    if not admin:
+        print("Sorry, no admin matching that ID was found.")
 
     else:
-        print("Employee/s Found:")
-        print("employeeID | firstName | lastName | SSN | salary | gender | email | address")
+        print("Admin/s Found:")
+        print("administratorID | employeeID | assignedTo | permissions | title")
 
-        for employee in employee: 
-            print("| {0:6d} | {1:10s} | {2:10s} | {3:10s} | {4:10i} | {5:10s} | {6:30s} | {7:50s}".format(employee[0], employee[1], employee[2], employee[3], employee[4], employee[5], employee[6], employee[7]))
+        for admin in admin: 
+            print("| {0:12d} | {1:10i} | {2:10s} | {3:10s} | {4:10s}".format(admin[0], admin[1], admin[2], admin[3], admin[4]))
 
-        delete_id = input("\nEnter employee ID to delete (or leave blank to cancel): ")
+        delete_id = input("\nEnter administratorID to delete (or leave blank to cancel): ")
         if delete_id:
-            deleteQuery = "DELETE FROM employees WHERE employee_id = %s"
+            deleteQuery = "DELETE FROM Administrator WHERE AdministratorID = %s"
             cursor.execute(deleteQuery, (delete_id,))
             cursor.commit()
             print("Employee with ID", delete_id, "deleted successfully.")
@@ -313,6 +313,8 @@ def deleteAdmin(reservationConnection):
     cursor.close()
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#----CODE FOR THE SEARCH QUERIES----#
+
 
 def main():
     try:
@@ -328,3 +330,4 @@ def main():
                 
     except errorcode as err:
         print("Error!")
+
