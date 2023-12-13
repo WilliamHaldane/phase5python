@@ -31,8 +31,9 @@ def connectToDB():
             password='O15mp8dk!202020',
             host='localhost',
             database='bookfetch'
-            )
+        )
         print("Successfully connected to the database!")
+        return reservationConnection
 
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -41,6 +42,7 @@ def connectToDB():
             print('Database not found')
         else:
             print('Cannot connect to database:', err)
+        return None
 
     else:
     # Execute database operations...
@@ -319,15 +321,85 @@ def deleteAdmin(reservationConnection):
 def main():
     try:
         with connectToDB() as reservationConnection:
-            with reservationConnection.cursor() as cursor:
-                newStudent(reservationConnection)
-                createCart(reservationConnection)
-                createNewBook(reservationConnection)
-                createRating(reservationConnection)
+            if reservationConnection:
+                while True:
+                    print("---WELCOME TO THE UNIVERSITY BOOK DATABASE---")
+                    print("Here are your options for where to go:")
+                    print("1. Add to the book database")
+                    print("2. Update the book database")
+                    print("3. Delete from the book database")
+                    print("4. See reports about the database")
+
+                    choice = input("Enter your choice (1-4): ")
+
+                    if choice == "1":
+                        print("YOU CHOSE OPTION 1. NOW CHOOSE WHICH USER TYPE YOU ARE:")
+                        print("=======================================================")
+                        print("1. Student user")
+                        print("2. Customer Service User")
+                        print("3. Administrator")
+                        print("4. Super Administrator")
+                        
+                        secondChoice = input("Enter your choice (1-4): ")
+                        if secondChoice == "1":
+                            print("YOU CHOSE OPTION 1. NOW CHOOSE WHAT YOU WANT TO ADD:")
+                            print("=======================================================")
+                            print("1. Create a new student")
+                            print("2. Create cart for a student")
+                            print("3. Create a new order")
+                            print("4. Submit order")
+                            print("5. Create a new book rating")
+
+                            thirdChoice = input("Enter your choice (1-5): ")
+                            if thirdChoice == "1":
+                                newStudent(reservationConnection)
+                            elif thirdChoice == "2":
+                                createCart(reservationConnection)
+                            # elif thirdChoice == "3":
+                            #     ##
+                            # elif thirdChoice == "4":
+                            #     ##Submit order
+                            else: 
+                                createRating(reservationConnection)
+                        
+                        elif secondChoice == "2":
+                            print("YOU CHOSE OPTION 2:")
+                            print("=======================================================")
+                            #troubleTicket(reservationConnection)
+
+                        elif secondChoice == "3": 
+                            print("YOU CHOSE OPTION 3. NOW CHOOSE WHAT YOU WANT TO ADD:")
+                            print("=======================================================")
+                            print("1. Create new book")
+                            print("2. Create a new university")
+
+                            fifthChoice = input("Enter your choice (1 or 2): ")
+                            if fifthChoice == "1":
+                                createNewBook(reservationConnection)
+                            else:
+                                #createUniversity(reservationConnection)
+                                print("will do")
+
+                        else: 
+                            print("YOU CHOSE OPTION 4: \n")
+                            createNewEmployee(reservationConnection)
 
 
-                #userCart(connection)
-                
-    except errorcode as err:
-        print("Error!")
+
+
+                        #newStudent(reservationConnection)
+                    elif choice == "2":
+                        createCart(reservationConnection)
+                    elif choice == "3":
+                        createNewBook(reservationConnection)
+                    elif choice == "4":
+                        createRating(reservationConnection)
+                    else:
+                        print("Invalid choice. Please enter a number between 1 and 4.")
+
+    except mysql.connector.Error as err:
+        print("Error:", err)
+    
+if __name__ == "__main__":
+    main()
 
