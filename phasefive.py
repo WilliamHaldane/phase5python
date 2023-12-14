@@ -226,19 +226,23 @@ def createNewBook(reservationConnection):
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #I WILL COME BACK TO
-'''
+
 def newUniversity(reservationConnection):
     cursor = reservationConnection.cursor()
 
-    universityID = int(input("Please enter a universityID: "))
+#university - 1 of them
+    #universityID = int(input("Please enter a universityID: "))
     name = input("Please enter the university name: ")
     address = input("Please enter the address: ")
     contactFirstName = input("Please enter the university contact first name: ")
-    contactLastName = input("Pleas enter the university contact last name: ")
+    contactLastName = input("Please enter the university contact last name: ")
     contactEmail = input("Please enter the contact email: ")
     contactPhone = int(input("Please enter the contact phone number (xxxxxxxxxx): "))
-    cursor.execute("INSERT INTO University (universityID, name, address, contactFirstName, contactLastName, contactEmail, contactPhone) VALUES (%s, %s, %s, %s, %s, %s, %s)", (universityID, name, address, contactFirstName, contactLastName, contactEmail, contactPhone))
+    cursor.execute("INSERT INTO University (name, address, contactFirstName, contactLastName, contactEmail, contactPhone) VALUES (%s, %s, %s, %s, %s, %s)", (name, address, contactFirstName, contactLastName, contactEmail, contactPhone))
 
+    universityID = cursor.lastrowid
+
+#departments inside of university
     for i in range(150):
         iteration = input("Do you want to continue adding departments (yes/no): ")
 
@@ -246,13 +250,40 @@ def newUniversity(reservationConnection):
             print("You have added all of your departments.")
             break
 
-        departmentID = int(input("Please enter the departmentID: "))
+       # departmentID = int(input("Please enter the departmentID: "))
         name = input("Please enter the department name: ")
-        uID = universityID
-        instructorID = int(input("Please enter the instructor"))
-        universityAssoc = universityID
-        cursor.execute("INSERT INTO Department (departmentID, name, universityID) VALUES (%s, %s, %s)", (departmentID, name, universityAssoc))
+        #uID = universityID
+        #instructorID = int(input("Please enter the instructor"))
+       # universityAssoc = universityID
+        cursor.execute("INSERT INTO Department (name, universityID) VALUES (%s, %s)", (name, universityID))
+#courses inside of departments    
+    for i in range(100):
+        iteration = input("Do you want to continue adding courses (yes/no): ")
 
+        if iteration.lower() == "no":
+            print("You have added all of your courses.")
+            break
+        
+        courseN = input("Please enter course name: ")
+        departmentID = input("Please enter departmentID it belongs in: ")
+        cursor.execute("INSERT INTO COURSE (name, departmentID, universityID) VALUES (%s, %s, %s)", (courseN, departmentID, universityID))
+#books associated with courses
+        
+    for i in range(100):
+        iteration = input("Do you want to continue adding books (yes/no): ")
+
+        if iteration.lower() == "no":
+            print("You have added all of your books.")
+            break
+        
+        isbn = input("Please enter ISBN_13 for the book: ")
+        cursor.execute("INSERT INTO BOOK (ISBN_13) VALUES (%s)", (isbn))
+
+    
+    reservationConnection.commit()
+    reservationConnection.close()
+
+'''
         for j in range(20):
             iteration = input("Do you have more professors to enter (yes/no): ")
 
@@ -263,13 +294,7 @@ def newUniversity(reservationConnection):
             instructorID = int(input("Please enter the instructorID: "))
             professorName = input("Please enter the professor name: ")
             cursor.execute("INSERT INTO Professor (instructorID, name) VALUES (%s, %s)", (instructorID, professorName))
-
-    
-
-    reservationConnection.commit()
-    reservationConnection.close()
-'''
-    
+ '''
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
