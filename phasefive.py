@@ -151,13 +151,13 @@ def createRating(reservationConnection):
     description = input("Please write a description: ")
 
     try:
-        bookRatingQuery = "INSERT INTO Rating (ISBN_13, studentID, rating, description) VALUES (%s, %s, %s, %s)"
+        bookRatingQuery = "INSERT INTO Review (ISBN_13, studentID, rating, description) VALUES (%s, %s, %s, %s)"
         cursor.execute(bookRatingQuery, (ISBN_13, studentID, rating, description))
         reservationConnection.commit()
         print("Your review has been submitted.")
     
-    except errorcode as err:
-        print("There was an issue with your review. Please try again.")
+    except mysql.connector.Error as err:
+        print("There was an issue with your review. Please try again." + err)
 
     finally:
         cursor.close()
@@ -208,18 +208,17 @@ def createNewBook(reservationConnection):
     publisher = input("Please enter the publisher: ")
     publishDate = input("Please enter the published date: ")
     edition = input("Please enter the edition of the book: ")
-    language = input("Please enter the language: ")
     format = input("Please enter the format (printed or electronic): ")
     weight = float(input("Please enter the weight of the book (lbs): "))
 
     try:
-        insertQuery = "INSERT INTO Book (ISBN_13, type, price, title, author, publisher, publishDate, edition, language, format, weight) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(insertQuery(isbn_13, type, price, title, author, publisher, publishDate, edition, language, format, weight))
+        insertQuery = "INSERT INTO Book (ISBN_13, type, price, title, author, publisher, publishDate, edition, format, weight) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(insertQuery, (isbn_13, type, price, title, author, publisher, publishDate, edition, format, weight))
         reservationConnection.commit()
         print("You successfully added a book to the database!")
 
-    except errorcode as err:
-        print("There was an issue with your insertion...")
+    except mysql.connector.Error as err:
+        print("There was an issue with your insertion..." + err)
 
     finally: 
         cursor.close()
@@ -291,12 +290,12 @@ def createNewEmployee(reservationConnection):
 
     try:
         addEmployee = "INSERT INTO Employee (employeeID, firstName, lastName, SSN, salary, gender, email, address) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(addEmployee(employeeID, firstname, lastName, ssn, salary, gender, email, address))
+        cursor.execute(addEmployee, (employeeID, firstname, lastName, ssn, salary, gender, email, address))
         reservationConnection.commit()
-        print("Successfully addded the employee.")
+        print("Successfully added the employee!")
 
-    except errorcode as err:
-        print("There was an issue with the insertion...")
+    except mysql.connector.Error as err:
+        print("There was an issue with the insertion..." + err)
 
     finally: 
         cursor.close()
@@ -305,14 +304,15 @@ def createNewEmployee(reservationConnection):
 
 #Student updates cart#
 def updateCart(reservationConnection):
+
+    cursor = reservationConnection.cursor()
+
+    studentID = int(input("Enter your studentID: "))
+    displayQuery = "SELECT * FROM Cart WHERE studentID = %s"
+    cursor.execute(displayQuery, (studentID,))
+    cartItems = cursor.fetchall()
+
     try:
-        cursor = reservationConnection.cursor()
-
-        studentID = int(input("Enter your studentID: "))
-        displayQuery = "SELECT * FROM Cart WHERE studentID = %s"
-        cursor.execute(displayQuery, (studentID,))
-        cartItems = cursor.fetchall()
-
         if not cartItems:
             print("No items in the cart.")
             return
@@ -321,7 +321,7 @@ def updateCart(reservationConnection):
         for item in cartItems:
             print(item)
 
-        choice = input("You have three options. 1. Do you want to modify an existing item? Enter modify. 2. Do you want to add a new item? Enter add. 3. Do you want to delete an item? Enter delete").lower()
+        choice = input("You have three options.\n 1. Do you want to modify an existing item? Enter modify.\n 2. Do you want to add a new item? Enter add.\n 3. Do you want to delete an item? Enter delete.\n").lower()
 
         if choice == "modify":
             cartID = int(input("Enter the cartID of the item you want to modify: "))
@@ -428,32 +428,26 @@ def cancelOrder(reservationConnection):
 def deleteAdmin(reservationConnection):
     cursor = reservationConnection.cursor()
 
-    deletedEiD = int(input("Please enter the administratorID of the admin you wish to delete: "))
-    findQuery = "SELECT * FROM Administrator WHERE administratorID = %s"
+    deletedEiD = int(input("Please enter the administratorID of the admin you wish to deactivate: "))
+    setNew = "UPDATE TroubleTicket SET status = 'New' WHERE assignedTo = %s"
+    deactivateAdmin = "UPDATE Administrator SET permissions = 'none'  WHERE administratorID = %s"
 
-    cursor.execute(findQuery(deletedEiD))
-    admin = cursor.fetchall()
+    try: 
+        # Update status in TroubleTicket table
+        cursor.execute(setNew, (deletedEiD,))
+        
+        # Deactivate admin in Administrator table
+        cursor.execute(deactivateAdmin, (deletedEiD,))
 
-    if not admin:
-        print("Sorry, no admin matching that ID was found.")
+        reservationConnection.commit()
+        print("You successfully deactivated the admin.")
+    except mysql.connector.Error as err:
+        print("There was an issue with your deactivation..." + str(err))
+        reservationConnection.rollback()
 
-    else:
-        print("Admin/s Found:")
-        print("administratorID | employeeID | assignedTo | permissions | title")
+    finally:
+        cursor.close()
 
-        for admin in admin: 
-            print("| {0:12d} | {1:10i} | {2:10s} | {3:10s} | {4:10s}".format(admin[0], admin[1], admin[2], admin[3], admin[4]))
-
-        delete_id = input("\nEnter administratorID to delete (or leave blank to cancel): ")
-        if delete_id:
-            deleteQuery = "DELETE FROM Administrator WHERE AdministratorID = %s"
-            cursor.execute(deleteQuery, (delete_id,))
-            cursor.commit()
-            print("Employee with ID", delete_id, "deleted successfully.")
-        else:
-            print("Deletion cancelled.")
-
-    cursor.close()
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #----CODE FOR THE SEARCH QUERIES----#
@@ -489,8 +483,7 @@ def main():
                             print("1. Create a new student")
                             print("2. Create cart for a student")
                             print("3. Create a new order")
-                            print("4. Submit order")
-                            print("5. Create a new book rating")
+                            print("4. Create a new book rating")
 
                             thirdChoice = input("Enter your choice (1-5): ")
                             if thirdChoice == "1":
@@ -501,7 +494,7 @@ def main():
                             #     ##
                             # elif thirdChoice == "4":
                             #     ##Submit order
-                            else: 
+                            elif thirdChoice == "4": 
                                 createRating(reservationConnection)
                         
                         elif secondChoice == "2":
@@ -537,10 +530,10 @@ def main():
 
                         if choicesix == "1": 
                             print("YOU CHOSE STUDENT USER. THE ONLY OPERATION IS UPDATE A CART")
-                            #updateCart(reservationConnection)
+                            updateCart(reservationConnection)
                         else: 
                             print("YOU CHOSE CUSTOMER SERVICE USER. THE ONLY OPERATION IS UPDATING A TROUBLE TICKET")
-                            #updateTicket(reservationConnection)
+                            updateTTicket(reservationConnection)
 
                     elif choice == "3": 
                         print("YOU CHOSE OPTION 3. NOW CHOOSE WHICH USER TYPE YOU ARE:")
