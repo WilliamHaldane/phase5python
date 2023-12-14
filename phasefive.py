@@ -276,8 +276,8 @@ def newUniversity(reservationConnection):
             print("You have added all of your books.")
             break
         
-        isbn = input("Please enter ISBN_13 for the book: ")
-        cursor.execute("INSERT INTO BOOK (ISBN_13) VALUES (%s)", (isbn))
+        isbn = int(input("Please enter ISBN_13 for the book: "))
+        cursor.execute("INSERT INTO BOOK (ISBN_13) VALUES (%s)", (isbn,))
 
     
     reservationConnection.commit()
@@ -537,8 +537,8 @@ def main():
                             if fifthChoice == "1":
                                 createNewBook(reservationConnection)
                             else:
-                                #createUniversity(reservationConnection)
-                                print("will do")
+                                newUniversity(reservationConnection)
+
 
                         else: 
                             print("YOU CHOSE OPTION 4: \n")
