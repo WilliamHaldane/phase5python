@@ -9,7 +9,7 @@ def connectToDB():
             user='root',
             password='O15mp8dk!202020',
             host='localhost',
-            database='bookfetch'
+            database='mark24'
         )
         print("Successfully connected to the database!")
         return reservationConnection
@@ -35,7 +35,8 @@ def newStudent(reservationConnection):
     universityID = int(input("Please enter a universityID: "))
     firstName = input("Please enter a first name: ")
     lastName = input("Please enter a last name: ")
-    email = input("Please enter an email address: ")
+    email = input("Please enter an email: ")
+    address = input("Please enter an address: ")
     phone = int(input("Please enter a phone number: "))
     birthDate = input("Please enter a birthdate (xxxx-xx-xx): ")
     major = input("Please enter a major: ")
@@ -44,12 +45,12 @@ def newStudent(reservationConnection):
 
     try: 
         insertQuery = "INSERT INTO Student (StudentID, universityID, firstName, lastName, email, address, phone, birthDate, major, status, year) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(insertQuery(studentID, universityID, firstName, lastName, email, phone, birthDate, major, status, year))
+        cursor.execute(insertQuery, (studentID, universityID, firstName, lastName, email, address, phone, birthDate, major, status, year))
         reservationConnection.commit()
         print("You successfully added a student to the database :0 ")
 
-    except errorcode as err:
-        print("There was an issue with your insertion...")
+    except mysql.connector.Error as err:
+        print("There was an issue with your insertion...1" + err)
 
     finally:
         cursor.close()
@@ -575,8 +576,9 @@ def main():
                             
                         else:
                             cursor = reservationConnection.cursor()
-                            if choice == "1":
+                            if choiceFinal == "1":
                                 query = "SELECT * FROM Student WHERE universityID = (SELECT universityID FROM University WHERE name = 'UST')"
+                                cursor.execute(query)
                             elif choiceFinal == "2":
                                 query = "SELECT * FROM Student WHERE status = 'Graduate'" 
                             elif choiceFinal == "3":
@@ -624,10 +626,11 @@ def main():
                             elif choiceFinal == "24":
                                 query = "SELECT b.title AS book_title, r.rating, s.firstName AS student_first_name, s.lastName AS student_last_name, u.name AS university_name FROM Book b LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 LEFT JOIN Student s ON r.studentID = s.studentID LEFT JOIN University u ON s.universityID = u.universityID WHERE r.rating = 5"
                             else:
-                                print("Pleas enter a valid number.")
+                                print("Please enter a valid number.")
 
                             cursor.execute(query)
                             result = cursor.fetchall()
+                        
                             print(f"Result for option {choice}:")
                             for row in result:
                                 print(row)
