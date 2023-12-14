@@ -91,8 +91,8 @@ def createCart(reservationConnection):
         else:
             print("Invalid ISBN-13. Book not found.")
 
-    except errorcode as e:
-        print("Error creating cart: ")
+    except errorcode as err:
+        print("Error creating cart: " + err)
 
     finally:
         cursor.close()
@@ -102,7 +102,7 @@ def createCart(reservationConnection):
 def createOrder(reservationConnection):
     try:
         cursor = reservationConnection.cursor()
-        
+
         cartID = int(input("Enter the cartID to create an order: "))
 
         getQuery = "SELECT * FROM Cart WHERE cartID = %s"
@@ -113,17 +113,22 @@ def createOrder(reservationConnection):
             print("Cart not found.")
             return
         
-        isbn_13 = cart[1]
-        quantity = cart[2]
-        studentID = cart[3]
-        dateCreated = cart[4]
-        dateUpdated = cart[5]
-        associatedBooks = cart[6]
+        cartID = cart[1]
+        isbn_13 = cart[2]
+        quantity = cart[3]
+        studentID = cart[4]
 
-        insertOrderQuery = "INSERT INTO `Order` (ISBN_13, Quantity, studentID, dateCreated, dateUpdated, associatedBooks) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(insertOrderQuery, (isbn_13, quantity, studentID, dateCreated, dateUpdated, associatedBooks))
+        dateCreated = input("Enter the date: ")
+        date_fulfilled = None
+        shipping_type = input("Enter shipping type: ")
+        creditName = input("Enter credit card name: ")
+        creditType = input("Enter credit card type: ")
+        orderStatus = "In-progress"
+
+        orderQuery = "INSERT INTO `Order` (cartID, studentID, dateCreated, dateFulfilled, bookList, shippingType, creditName, creditType, orderStatus) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(orderQuery, (cartID, isbn_13, quantity, studentID, dateCreated, date_fulfilled, shipping_type, creditName, creditType, orderStatus))
+       
         print("Order created successfully.")
-
         reservationConnection.commit()
 
     except errorcode as err:
@@ -131,10 +136,6 @@ def createOrder(reservationConnection):
 
     finally:
         cursor.close()
-
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-#def submitOrder:
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
