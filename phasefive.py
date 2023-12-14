@@ -134,7 +134,30 @@ def createRating(reservationConnection):
 
 #Customer Service Module!
 
-#def createTrouble:
+def createTrouble(reservationConnection):
+    cursor = reservationConnection.cursor()
+
+    ticketID = int(input("Please enter a ticketID: "))
+    studentID = int(input("Please enter the studentID for the ticket: "))
+    assignedTo = int(input("Please enter the employeeID of who the ticket is assigned to: "))
+    dateLogged = input("Please enter the date of creation (2017-06-15): ")
+    dateCompleted = input("Please enter the date of completion (2017-06-15): ")
+    title = input("Please enter the title of the ticket: ")
+    status = input("Please enter the status (new, in-progress, resolved): ")
+    description = input("Please write the described issue: ")
+
+    try: 
+        ticketQuery = "INSERT INTO TroubleTicket (ticketID, studentID, assignedTo, dateLogged, dateCompleted, title, status, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(ticketQuery(ticketID, studentID, assignedTo, dateLogged, dateCompleted, title, status, description))
+        reservationConnection.commit()
+        print("You successfully added a new ticket to the database!")
+
+    except errorcode as err:
+        print("There was an issue with your trouble ticket...")
+
+    finally:
+        cursor.close()
+
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -248,12 +271,100 @@ def createNewEmployee(reservationConnection):
 #----FOR UPDATES----#
 
 #Student updates cart#
-#def updateCart:
+def updateCart(reservationConnection):
+    try:
+        cursor = reservationConnection.cursor()
+
+        studentID = int(input("Enter your studentID: "))
+        displayQuery = "SELECT * FROM Cart WHERE studentID = %s"
+        cursor.execute(displayQuery, (studentID,))
+        cartItems = cursor.fetchall()
+
+        if not cartItems:
+            print("No items in the cart.")
+            return
+
+        print("Current Cart Items:")
+        for item in cartItems:
+            print(item)
+
+        choice = input("You have three options. 1. Do you want to modify an existing item? Enter modify. 2. Do you want to add a new item? Enter add. 3. Do you want to delete an item? Enter delete").lower()
+
+        if choice == "modify":
+            cartID = int(input("Enter the cartID of the item you want to modify: "))
+            newQuantity = int(input("Enter the new quantity: "))
+            updateItemQuery = "UPDATE Cart SET Quantity = %s WHERE cartID = %s"
+            cursor.execute(updateItemQuery, (newQuantity, cartID))
+            print("Cart item updated successfully.")
+
+        elif choice == "add":
+            cartID = int(input("Enter the cartID for the new item: "))
+            isbn_13 = int(input("Enter the ISBN-13 of the new item: "))
+            quantity = int(input("Enter the quantity: "))
+            studentID = int(input("Enter the studentID: "))
+            dateCreated = input("Enter the date the cart was created: ")
+            dateUpdated = input("Enter the date the cart was last updated: ")
+
+            insertItemQuery = "INSERT INTO Cart (cartID, ISBN_13, quantity, studentID, dateCreated, dateUpdated) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(insertItemQuery, (cartID, isbn_13, quantity, studentID, dateCreated, dateUpdated))
+            print("New item added to the cart successfully.")
+
+        elif choice == "delete":
+            isbn_13 = int(input("Enter the ISBN-13 of the item you want to delete: "))
+            deleteItemQuery = "DELETE FROM Cart WHERE studentID = %s AND ISBN_13 = %s"
+            cursor.execute(deleteItemQuery, (studentID, isbn_13))
+            print("Cart item deleted successfully.")
+
+        else:
+            print("Invalid action. Please choose 'modify', 'add' or 'delete'")
+
+        reservationConnection.commit()
+
+    except errorcode as err:
+        print("Error updating cart: ", err)
+
+    finally:
+        cursor.close()
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#customer service updates a trouble ticket
-#def updateTT:
+def updateTTicket(reservationConnection):
+    try:
+        cursor = reservationConnection.cursor()
+
+        displayTicketsQuery = "SELECT * FROM TroubleTicket"
+        cursor.execute(displayTicketsQuery)
+        troubleTickets = cursor.fetchall()
+
+        if not troubleTickets:
+            print("No trouble tickets.")
+            return
+
+        print("Current Trouble Tickets:")
+        for ticket in troubleTickets:
+            print(ticket)
+
+        ticketID = int(input("Enter the ticketID you want to update: "))
+
+        adminID = int(input("Enter the adminID to assign the ticket to: "))
+        assignQuery = "UPDATE TroubleTicket SET assignedTo = %s WHERE ticketID = %s"
+        cursor.execute(assignQuery, (adminID, ticketID))
+        print("Ticket assigned to admin successfully.")
+
+        description = input("Enter the description for the assignment: ")
+        descriptionQuery = "UPDATE TroubleTicket SET description = %s WHERE ticketID = %s"
+        cursor.execute(descriptionQuery, (description, ticketID))
+        print("Ticket description updated successfully.")
+
+        reservationConnection.commit()
+
+    except errorcode as err:
+        print("Error updating trouble ticket:", err)
+
+    finally:
+        cursor.close()
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #----FOR DELETES----#
 
