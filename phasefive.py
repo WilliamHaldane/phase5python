@@ -99,7 +99,38 @@ def createCart(reservationConnection):
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#def createOrder:
+def createOrder(reservationConnection):
+    try:
+        cursor = reservationConnection.cursor()
+        
+        cartID = int(input("Enter the cartID to create an order: "))
+
+        getQuery = "SELECT * FROM Cart WHERE cartID = %s"
+        cursor.execute(getQuery, (cartID))
+        cart = cursor.fetchone()
+
+        if not cart:
+            print("Cart not found.")
+            return
+        
+        isbn_13 = cart[1]
+        quantity = cart[2]
+        studentID = cart[3]
+        dateCreated = cart[4]
+        dateUpdated = cart[5]
+        associatedBooks = cart[6]
+
+        insertOrderQuery = "INSERT INTO `Order` (ISBN_13, Quantity, studentID, dateCreated, dateUpdated, associatedBooks) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(insertOrderQuery, (isbn_13, quantity, studentID, dateCreated, dateUpdated, associatedBooks))
+        print("Order created successfully.")
+
+        reservationConnection.commit()
+
+    except errorcode as err:
+        print("Error creating order:", err)
+
+    finally:
+        cursor.close()
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
