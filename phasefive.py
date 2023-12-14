@@ -62,7 +62,7 @@ def createCart(reservationConnection):
 
     showBookQuery = "SELECT * FROM Book"
     cursor.execute(showBookQuery)
-    result = cursor.fetchall
+    result = cursor.fetchall()
     
     print("\nAvailable Books:")
     print("ISBN-13 | Type | Price | Title | Author | Publisher | PublishDate | Edition | Language | Format | Weight")
@@ -72,10 +72,11 @@ def createCart(reservationConnection):
 
     isbn_13 = input("Enter the ISBN-13 of the book you want to add to the cart: ")
 
+
     try:
         # Check if the book exists
-        verifyQuery = "SELECT * FROM Book WHERE ISBN_13 = ?"
-        showBookQuery(cursor, verifyQuery, (isbn_13,))
+        verifyQuery = "SELECT * FROM Book WHERE ISBN_13 = %s"
+        cursor.execute(verifyQuery, (isbn_13,))
         book = cursor.fetchone()
 
         if book:
@@ -83,16 +84,16 @@ def createCart(reservationConnection):
             studentID = int(input("Enter your studentID: "))
             dateCreated = input("Enter the date: ")
             dateUpdated = input("Enter the date you finished: ")
-            associatedBooks = book
+            associatedBooks = input("Enter your association: ")
             #Might need to make sure that the associated books is retrieving the books they specified
 
-            cartQuery(cursor, cartQuery, (studentID, dateCreated, dateUpdated, associatedBooks, isbn_13))
+            cursor.execute(cartQuery, (studentID, dateCreated, dateUpdated, associatedBooks))
             reservationConnection.commit()
             print("Book added to the cart successfully!")
         else:
             print("Invalid ISBN-13. Book not found.")
 
-    except errorcode as err:
+    except mysql.connector.Error as err:
         print("Error creating cart: " + err)
 
     finally:
@@ -151,8 +152,7 @@ def createRating(reservationConnection):
 
     try:
         bookRatingQuery = "INSERT INTO Rating (ISBN_13, studentID, rating, description) VALUES (%s, %s, %s, %s)"
-        data = (ISBN_13, studentID, rating, description)
-        cursor.execute(bookRatingQuery, data)
+        cursor.execute(bookRatingQuery, (ISBN_13, studentID, rating, description))
         reservationConnection.commit()
         print("Your review has been submitted.")
     
@@ -181,12 +181,12 @@ def createTrouble(reservationConnection):
 
     try: 
         ticketQuery = "INSERT INTO TroubleTicket (ticketID, studentID, assignedTo, dateLogged, dateCompleted, title, status, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(ticketQuery(ticketID, studentID, assignedTo, dateLogged, dateCompleted, title, status, description))
+        cursor.execute(ticketQuery, (ticketID, studentID, assignedTo, dateLogged, dateCompleted, title, status, description))
         reservationConnection.commit()
         print("You successfully added a new ticket to the database!")
 
-    except errorcode as err:
-        print("There was an issue with your trouble ticket...")
+    except mysql.connector.Error as err:
+        print("There was an issue with your trouble ticket..." + err)
 
     finally:
         cursor.close()
@@ -401,8 +401,26 @@ def updateTTicket(reservationConnection):
 
 #----FOR DELETES----#
 
-#Student cancels an order
-#def cancelOrder:
+
+def cancelOrder(reservationConnection):
+    cursor = reservationConnection.cursor()
+
+    cartID = int(input("Please enter cartID: "))
+    studentID = int(input("Please enter studentID: "))
+    findQuery = "SELECT * FROM PlaceOrder WHERE cardID = %s and WHERE studentID = %s"
+
+    cursor.execute(findQuery, (cartID, studentID))
+    order = cursor.fetchall()
+
+    if not order:
+        print("Sorry, no order found.")
+    else:
+        print(order)
+        print("That order will now be cancelled.")
+        cancelQuery = "UPDATE PlaceOrder SET orderStatus WHERE cardID = %s and WHERE stduentID = %s"
+        cursor.execute(cancelQuery, (cartID, studentID))
+        cursor.commit()
+
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -489,7 +507,7 @@ def main():
                         elif secondChoice == "2":
                             print("YOU CHOSE OPTION 2:")
                             print("=======================================================")
-                            #troubleTicket(reservationConnection)
+                            createTrouble(reservationConnection)
 
                         elif secondChoice == "3": 
                             print("YOU CHOSE OPTION 3. NOW CHOOSE WHAT YOU WANT TO ADD:")
@@ -509,7 +527,7 @@ def main():
                             createNewEmployee(reservationConnection)
 
 
-                    if choice == "2":
+                    elif choice == "2":
                         print("YOU CHOSE OPTION 2. NOW CHOOSE WHICH USER TYPE YOU ARE:")
                         print("=======================================================")
                         print("1. Student user")
@@ -524,7 +542,7 @@ def main():
                             print("YOU CHOSE CUSTOMER SERVICE USER. THE ONLY OPERATION IS UPDATING A TROUBLE TICKET")
                             #updateTicket(reservationConnection)
 
-                    if choice == "3": 
+                    elif choice == "3": 
                         print("YOU CHOSE OPTION 3. NOW CHOOSE WHICH USER TYPE YOU ARE:")
                         print("=======================================================")
                         print("1. Student user")
@@ -539,7 +557,7 @@ def main():
                             print("YOU CHOSE ADMIN USER. THE ONLY OPERATION IS TO DELETE AN ADMIN USER")
                             deleteAdmin(reservationConnection)
 
-                    if choice == "4":
+                    elif choice == "4":
                         print("YOU CHOSE OPTION 4. NOW CHOOSE WHICH REPORT YOU WANT TO SEE:")
                         print("=======================================================")
                         print("1. List details of students attending 'UST' - Student attributes")
