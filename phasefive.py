@@ -1,24 +1,3 @@
-#Phase 5 python program
-# import mysql.connector
-# from mysql.connector import Error
-
-# def connect():
-#     """Establish a connection to the MySQL database."""
-#     try:
-#         connection = mysql.connector.connect(
-#             host='localhost:3306',
-#             database='bookfetch',
-#             user='root',
-#             password='O15mp8dk!202020'
-            
-#         )
-#         if connection.is_connected():
-#             print('Connected to MySQL database')
-#             return connection
-#     except Error as e:
-#         print(f"Error: {e}")
-#         return None
-
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -341,6 +320,7 @@ def main():
                         print("4. Super Administrator")
                         
                         secondChoice = input("Enter your choice (1-4): ")
+                        
                         if secondChoice == "1":
                             print("YOU CHOSE OPTION 1. NOW CHOOSE WHAT YOU WANT TO ADD:")
                             print("=======================================================")
@@ -385,17 +365,133 @@ def main():
                             createNewEmployee(reservationConnection)
 
 
+                    if choice == "2":
+                        print("YOU CHOSE OPTION 2. NOW CHOOSE WHICH USER TYPE YOU ARE:")
+                        print("=======================================================")
+                        print("1. Student user")
+                        print("2. Customer Service User")
 
+                        choicesix = input("Enter your user type (1 or 2): ")
 
-                        #newStudent(reservationConnection)
-                    elif choice == "2":
-                        createCart(reservationConnection)
-                    elif choice == "3":
-                        createNewBook(reservationConnection)
-                    elif choice == "4":
-                        createRating(reservationConnection)
+                        if choicesix == "1": 
+                            print("YOU CHOSE STUDENT USER. THE ONLY OPERATION IS UPDATE A CART")
+                            #updateCart(reservationConnection)
+                        else: 
+                            print("YOU CHOSE CUSTOMER SERVICE USER. THE ONLY OPERATION IS UPDATING A TROUBLE TICKET")
+                            #updateTicket(reservationConnection)
+
+                    if choice == "3": 
+                        print("YOU CHOSE OPTION 3. NOW CHOOSE WHICH USER TYPE YOU ARE:")
+                        print("=======================================================")
+                        print("1. Student user")
+                        print("2. Adminstrator User")
+
+                        choiceSeven = input("Enter your user type (1 or 2): ")
+
+                        if choiceSeven == "1":
+                            print("YOU CHOSE STUDENT USER. THE ONLY OPERATION IS CANCEL ORDER")
+                            #deleteOrder(reservationConnection)
+                        else:
+                            print("YOU CHOSE ADMIN USER. THE ONLY OPERATION IS TO DELETE AN ADMIN USER")
+                            deleteAdmin(reservationConnection)
+
+                    if choice == "4":
+                        print("YOU CHOSE OPTION 4. NOW CHOOSE WHICH REPORT YOU WANT TO SEE:")
+                        print("=======================================================")
+                        print("1. List details of students attending 'UST' - Student attributes")
+                        print("2. List details of graduate students from all universities - Student attributes")
+                        print("3. List details of Computer Science majors buying more than two books - Student attributes")
+                        print("4. List books that have sold or rented the most - Book title, book PK")
+                        print("5. List books by category and subcategories - Category, subcategory, book title, book PK")
+                        print("6. List book names required for a course (excluding 'Computer Science' category) - Course name, book title")
+                        print("7. List books bought by students not associated with a university course - Book title, book PK")
+                        print("8. List books and count of courses each book has been associated with - Book title, PK, count of courses")
+                        print("9. List book titles related to 'Linear Algebra' - Book title")
+                        print("10. List books with overall ratings higher than 3 - Book titles")
+                        print("11. Show books, count of purchases, and overall rating for each book, ordered by rating - Book title, count of purchases, overall rating")
+                        print("12. List average number of books students buy grouped by book category - Category, average number of books")
+                        print("13. List details of each university, including departments, courses, and instructors per course - University name, department name, course name, count of instructors per course")
+                        print("14. For each university, find total number of associated books - University name, count of books, total sum of book costs")
+                        print("15. List customer service employees and total number of tickets they created - CS name and PK, count of tickets created")
+                        print("16. List administrators ordered by salary - Admin name and salary, ordered")
+                        print("17. List administrators and total tickets closed - Admin name, count of tickets closed")
+                        print("18. List tickets grouped by state, total number created by students and customer support - State, total number")
+                        print("19. Find average time for a ticket from created to closed - Average time")
+                        print("20. For each closed ticket, show ticket history ordered by ticket - Ticket title/PK, ticket attributes, including state")
+                        print("21. List recommended books for each student - Students name, recommended book titles")
+                        print("22. For each book, list total count of students who purchased books with at least one common keyword - Book title, count of students")
+                        print("23. List books by overall ratings and by number of students who rated them - Rating, book titles, number of students who rated each book")
+                        print("24. List books with a rating of 5 and students who rated them, along with students universities - Book title, rating, student name, university name")
+                        print("======================================================= \n")
+
+                        choiceFinal = input("Enter which report you want to see (1-24) and 25 to exit: ")
+
+                        if choice == "25":
+                            print("Exiting the program. Goodbye!")
+                            break
+                            
+                        else:
+                            cursor = reservationConnection.cursor()
+                            if choice == "1":
+                                query = "SELECT * FROM Student WHERE universityID = (SELECT universityID FROM University WHERE name = 'UST')"
+                            elif choiceFinal == "2":
+                                query = "SELECT * FROM Student WHERE status = 'Graduate'" 
+                            elif choiceFinal == "3":
+                                query = "SELECT s.* FROM Student s JOIN PlaceOrder o ON s.StudentID = o.studentID JOIN Course c ON s.universityID = c.universityID JOIN Department d ON c.departmentID = d.departmentID WHERE d.name = 'Computer Science' GROUP BY s.StudentID HAVING AVG(o.quantity) > 2"
+                            elif choiceFinal == "4":
+                                query = "SELECT b.title, b.ISBN_13 FROM Book b JOIN PlaceOrder o ON b.ISBN_13 = o.bookList GROUP BY b.title, b.ISBN_13 ORDER BY SUM(o.quantity) DESC"
+                            elif choiceFinal == "5":
+                                query = "SELECT b.title, b.ISBN_13, b.type AS category, b.format AS subcategory FROM Book b"
+                            elif choiceFinal == "6":
+                                query = "SELECT c.name AS course_name, b.title AS book_title FROM Course c JOIN Book b ON c.courseID = b.ISBN_13 WHERE c.name != 'Computer Science'"
+                            #elif choiceFinal == "7":
+
+                            elif choiceFinal == "8":
+                                query = "SELECT b.title, b.ISBN_13, COUNT(c.courseID) AS course_count FROM Book b LEFT JOIN Course c ON b.ISBN_13 = c.courseID GROUP BY b.title, b.ISBN_13"
+                            #elif choiceFinal == "9":
+
+                            elif choiceFinal == "10":
+                                query = "SELECT b.title FROM Book b JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title HAVING AVG(r.rating) > 3"
+                            elif choiceFinal == "11":
+                                query = "SELECT b.title AS book_title, COUNT(DISTINCT o.orderID) AS count_of_purchases, COALESCE(AVG(r.rating), 0) AS overall_rating FROM Book b LEFT JOIN CartBookAssociation cba ON b.ISBN_13 = cba.ISBN_13 LEFT JOIN Cart c ON cba.cartID = c.cartID RIGHT JOIN PlaceOrder o ON c.cartID= o.cartID LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC"
+                            #elif choiceFinal == "12":
+
+                            elif choiceFinal == "13": 
+                                query = "SELECT u.name AS university_name, d.name AS department_name, c.name AS course_name, COUNT(i.instructorID) AS count_of_instructors FROM University u JOIN Department d ON u.universityID = d.universityID JOIN Course c ON d.departmentID = c.departmentID LEFT JOIN Instructor i ON c.courseID = i.courseID GROUP BY u.name, d.name, c.name"
+                            elif choiceFinal == "14": 
+                                query = "SELECT u.name AS university_name, COUNT(DISTINCT b.ISBN_13) AS count_of_books, SUM(b.price * b.quantity) AS total_book_cost FROM University u JOIN Department d ON u.universityID = d.universityID JOIN Course c ON d.departmentID = c.departmentID LEFT JOIN CartBookAssociation cba ON c.courseID = cba.ISBN_13 LEFT JOIN Book b ON cba.ISBN_13 = b.ISBN_13 GROUP BY u.name"
+                            elif choiceFinal == "15":
+                                query = "SELECT e.firstName, e.lastName COUNT(t.ticketID) AS count_of_tickets_created FROM Employee e RIGHT JOIN CustomerSupportUser CS ON e.employeeID = CS.employeeID LEFT JOIN TroubleTicket t ON cs.employeeID = t.employeeID GROUP BY e.employeeID"
+                            elif choiceFinal == "16":
+                                query = "SELECT e.firstName, e.lastName, e.salary FROM Employee e WHERE e.employeeID IN (SELECT employeeID FROM Administrator) ORDER BY e.salary"
+                            elif choiceFinal == "17": 
+                                query = "SELECT e.firstName, e.lastName, COUNT(t.ticketID) AS count_of_tickets_closed FROM Employee e RIGHT JOIN Administrator a ON e.employeeID = a.employeeID LEFT JOIN Ticket t ON a.administratorID = t.assignedTo WHERE t.status=’Closed’ GROUP BY e.employeeID"
+                            elif choiceFinal == "18": 
+                                query = "SELECT t.status, COUNT(CASE WHEN t.studentID IS NOT NULL THEN t.ticketID END) AS count_by_student, COUNT(CASE WHEN t.employeeID IS NOT NULL THEN t.ticketID END) AS count_by_customer_support FROM Ticket t GROUP BY t.status"
+                            elif choiceFinal == "19": 
+                                query = "SELECT AVG(DATEDIFF(t.dateClosed, t.dateLogged)) AS avg_ticket_duration FROM Ticket t"
+                            elif choiceFinal == "20":
+                                query = "SELECT (*) FROM Ticket t WHERE t.status = 'closed' ORDER BY t.ticketID"
+                            #elif choiceFinal == "21": 
+
+                            #elif choiceFinal == "22":
+
+                            elif choiceFinal == "23":
+                                query = "SELECT b.title AS book_title, AVG(r.rating) AS overall_rating, COUNT(DISTINCT r.studentID) AS count_of_students_rated FROM Book b LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC, count_of_students_rated DESC"
+                            elif choiceFinal == "24":
+                                query = "SELECT b.title AS book_title, r.rating, s.firstName AS student_first_name, s.lastName AS student_last_name, u.name AS university_name FROM Book b LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 LEFT JOIN Student s ON r.studentID = s.studentID LEFT JOIN University u ON s.universityID = u.universityID WHERE r.rating = 5"
+                            else:
+                                print("Pleas enter a valid number.")
+
+                            cursor.execute(query)
+                            result = cursor.fetchall()
+                            print(f"Result for option {choice}:")
+                            for row in result:
+                                print(row)
+
+                            cursor.close()
                     else:
-                        print("Invalid choice. Please enter a number between 1 and 4.")
+                        print("Invalid choice. Please enter a number in the correct domain")
 
     except mysql.connector.Error as err:
         print("Error:", err)
