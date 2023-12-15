@@ -9,7 +9,7 @@ def connectToDB():
             user='root',
             password='O15mp8dk!202020',
             host='localhost',
-            database='mark24'
+            database='actualfinal'
         )
         print("Successfully connected to the database!")
         return reservationConnection
@@ -108,32 +108,32 @@ def createOrder(reservationConnection):
         cartID = int(input("Enter the cartID to create an order: "))
 
         getQuery = "SELECT * FROM Cart WHERE cartID = %s"
-        cursor.execute(getQuery, (cartID))
+        cursor.execute(getQuery, (cartID,))
         cart = cursor.fetchone()
 
         if not cart:
             print("Cart not found.")
             return
         
-        cartID = cart[1]
-        isbn_13 = cart[2]
-        quantity = cart[3]
-        studentID = cart[4]
-
-        dateCreated = input("Enter the date: ")
-        date_fulfilled = None
+        cartID = cart[0]
+        isbn_13 = cart[1]
+        quantity = cart[2]
+        studentID = cart[3]
+        dateCreated = cart[4]
+        date_fulfilled = input("What is the estimated arrival: ")
+        bookList = input("Enter the books on the list: ")
         shipping_type = input("Enter shipping type: ")
         creditName = input("Enter credit card name: ")
         creditType = input("Enter credit card type: ")
         orderStatus = "In-progress"
 
-        orderQuery = "INSERT INTO `Order` (cartID, studentID, dateCreated, dateFulfilled, bookList, shippingType, creditName, creditType, orderStatus) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(orderQuery, (cartID, isbn_13, quantity, studentID, dateCreated, date_fulfilled, shipping_type, creditName, creditType, orderStatus))
+        orderQuery = "INSERT INTO makeOrder (cartID, ISBN_13, quantity, studentID, dateCreated, dateFulfilled, bookList, shippingType, creditName, creditType, orderStatus) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(orderQuery, (cartID, isbn_13, quantity, studentID, dateCreated, date_fulfilled, bookList, shipping_type, creditName, creditType, orderStatus))
        
         print("Order created successfully.")
         reservationConnection.commit()
 
-    except errorcode as err:
+    except mysql.connector.Error as err:
         print("Error creating order:", err)
 
     finally:
@@ -426,25 +426,28 @@ def updateTTicket(reservationConnection):
 
 #----FOR DELETES----#
 
-
 def cancelOrder(reservationConnection):
     cursor = reservationConnection.cursor()
 
     cartID = int(input("Please enter cartID: "))
     studentID = int(input("Please enter studentID: "))
-    findQuery = "SELECT * FROM PlaceOrder WHERE cardID = %s and WHERE studentID = %s"
+    
+    findQuery = "SELECT * FROM makeOrder WHERE cartID = %s AND studentID = %s"
 
     cursor.execute(findQuery, (cartID, studentID))
-    order = cursor.fetchall()
+    order = cursor.fetchone()
 
     if not order:
         print("Sorry, no order found.")
     else:
         print(order)
         print("That order will now be cancelled.")
-        cancelQuery = "UPDATE PlaceOrder SET orderStatus WHERE cardID = %s and WHERE stduentID = %s"
+        cancelQuery = "UPDATE makeOrder SET orderStatus = 'cancelled' WHERE cartID = %s AND studentID = %s"
         cursor.execute(cancelQuery, (cartID, studentID))
-        cursor.commit()
+        reservationConnection.commit()
+
+    cursor.close()
+
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -515,10 +518,8 @@ def main():
                                 newStudent(reservationConnection)
                             elif thirdChoice == "2":
                                 createCart(reservationConnection)
-                            # elif thirdChoice == "3":
-                            #     ##
-                            # elif thirdChoice == "4":
-                            #     ##Submit order
+                            elif thirdChoice == "3":
+                                createOrder(reservationConnection)
                             elif thirdChoice == "4": 
                                 createRating(reservationConnection)
                         
@@ -570,7 +571,7 @@ def main():
 
                         if choiceSeven == "1":
                             print("YOU CHOSE STUDENT USER. THE ONLY OPERATION IS CANCEL ORDER")
-                            #deleteOrder(reservationConnection)
+                            cancelOrder(reservationConnection)
                         else:
                             print("YOU CHOSE ADMIN USER. THE ONLY OPERATION IS TO DELETE AN ADMIN USER")
                             deleteAdmin(reservationConnection)
@@ -606,68 +607,109 @@ def main():
 
                         choiceFinal = input("Enter which report you want to see (1-24) and 25 to exit: ")
 
-                        if choice == "25":
+                        if choiceFinal == "25":
                             print("Exiting the program. Goodbye!")
                             break
                             
                         else:
                             cursor = reservationConnection.cursor()
                             if choiceFinal == "1":
-                                query = "SELECT * FROM Student WHERE universityID = (SELECT universityID FROM University WHERE name = 'UST')"
+                                query = "SELECT * FROM Student WHERE universityID = (SELECT universityID FROM University WHERE name = 'University of St. Thomas')"
                                 cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "2":
                                 query = "SELECT * FROM Student WHERE status = 'Graduate'" 
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "3":
-                                query = "SELECT s.* FROM Student s JOIN PlaceOrder o ON s.StudentID = o.studentID JOIN Course c ON s.universityID = c.universityID JOIN Department d ON c.departmentID = d.departmentID WHERE d.name = 'Computer Science' GROUP BY s.StudentID HAVING AVG(o.quantity) > 2"
+                                query = "SELECT s.* FROM Student s JOIN makeOrder o ON s.StudentID = o.studentID JOIN Course c ON s.universityID = c.universityID JOIN Department d ON c.departmentID = d.departmentID WHERE d.name = 'Computer Science' GROUP BY s.StudentID HAVING AVG(o.quantity) > 2"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "4":
-                                query = "SELECT b.title, b.ISBN_13 FROM Book b JOIN PlaceOrder o ON b.ISBN_13 = o.bookList GROUP BY b.title, b.ISBN_13 ORDER BY SUM(o.quantity) DESC"
+                                query = "SELECT b.title, b.ISBN_13 FROM Book b JOIN makeOrder o ON b.ISBN_13 = o.bookList GROUP BY b.title, b.ISBN_13 ORDER BY SUM(o.quantity) DESC"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "5":
                                 query = "SELECT b.title, b.ISBN_13, b.type AS category, b.format AS subcategory FROM Book b"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "6":
                                 query = "SELECT c.name AS course_name, b.title AS book_title FROM Course c JOIN Book b ON c.courseID = b.ISBN_13 WHERE c.name != 'Computer Science'"
-                            #elif choiceFinal == "7":
-
+                                cursor.execute(query)
+                                result = cursor.fetchall()
+                            elif choiceFinal == "7":
+                                query = "SELECT c.studentID, b.title, b.ISBN_13, COUNT(*) AS purchase_count FROM Cart c JOIN CartBookAssociation cba ON c.cartID = cba.cartID JOIN Book b ON cba.ISBN_13 = b.ISBN_13 GROUP BY c.studentID, b.title, b.ISBN_13 HAVING COUNT(*) >= 2"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "8":
                                 query = "SELECT b.title, b.ISBN_13, COUNT(c.courseID) AS course_count FROM Book b LEFT JOIN Course c ON b.ISBN_13 = c.courseID GROUP BY b.title, b.ISBN_13"
-                            #elif choiceFinal == "9":
-
+                                cursor.execute(query)
+                                result = cursor.fetchall()
+                            elif choiceFinal == "9":
+                                query = "SELECT title FROM Book WHERE title LIKE '%Linear Algebra%'"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "10":
-                                query = "SELECT b.title FROM Book b JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title HAVING AVG(r.rating) > 3"
+                                query = "SELECT b.title FROM Book b JOIN Review r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title HAVING AVG(r.rating) > 3"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "11":
-                                query = "SELECT b.title AS book_title, COUNT(DISTINCT o.orderID) AS count_of_purchases, COALESCE(AVG(r.rating), 0) AS overall_rating FROM Book b LEFT JOIN CartBookAssociation cba ON b.ISBN_13 = cba.ISBN_13 LEFT JOIN Cart c ON cba.cartID = c.cartID RIGHT JOIN PlaceOrder o ON c.cartID= o.cartID LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC"
-                            #elif choiceFinal == "12":
-
+                                query = "SELECT b.title AS book_title, COUNT(DISTINCT o.orderID) AS count_of_purchases, COALESCE(AVG(r.rating), 0) AS overall_rating FROM Book b LEFT JOIN CartBookAssociation cba ON b.ISBN_13 = cba.ISBN_13 LEFT JOIN Cart c ON cba.cartID = c.cartID RIGHT JOIN Order o ON c.cartID= o.cartID LEFT JOIN Review r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
+                            elif choiceFinal == "12":
+                                query = "SELECT b.type AS category, AVG(o.quantity) AS average_books_per_student FROM Book b LEFT JOIN Order o ON b.ISBN_13 = o.ISBN_13 GROUP BY b.type"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "13": 
                                 query = "SELECT u.name AS university_name, d.name AS department_name, c.name AS course_name, COUNT(i.instructorID) AS count_of_instructors FROM University u JOIN Department d ON u.universityID = d.universityID JOIN Course c ON d.departmentID = c.departmentID LEFT JOIN Instructor i ON c.courseID = i.courseID GROUP BY u.name, d.name, c.name"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "14": 
                                 query = "SELECT u.name AS university_name, COUNT(DISTINCT b.ISBN_13) AS count_of_books, SUM(b.price * b.quantity) AS total_book_cost FROM University u JOIN Department d ON u.universityID = d.universityID JOIN Course c ON d.departmentID = c.departmentID LEFT JOIN CartBookAssociation cba ON c.courseID = cba.ISBN_13 LEFT JOIN Book b ON cba.ISBN_13 = b.ISBN_13 GROUP BY u.name"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "15":
-                                query = "SELECT e.firstName, e.lastName COUNT(t.ticketID) AS count_of_tickets_created FROM Employee e RIGHT JOIN CustomerSupportUser CS ON e.employeeID = CS.employeeID LEFT JOIN TroubleTicket t ON cs.employeeID = t.employeeID GROUP BY e.employeeID"
+                                query = "SELECT e.firstName, e.lastName, COUNT(t.ticketID) AS count_of_tickets_created FROM Employee e RIGHT JOIN CustomerSupportUser CS ON e.employeeID = CS.employeeID LEFT JOIN TroubleTicket t ON cs.employeeID = t.assignedTo GROUP BY e.employeeID"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "16":
                                 query = "SELECT e.firstName, e.lastName, e.salary FROM Employee e WHERE e.employeeID IN (SELECT employeeID FROM Administrator) ORDER BY e.salary"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "17": 
-                                query = "SELECT e.firstName, e.lastName, COUNT(t.ticketID) AS count_of_tickets_closed FROM Employee e RIGHT JOIN Administrator a ON e.employeeID = a.employeeID LEFT JOIN Ticket t ON a.administratorID = t.assignedTo WHERE t.status=’Closed’ GROUP BY e.employeeID"
+                                query = "SELECT e.firstName, e.lastName, COUNT(t.ticketID) AS count_of_tickets_closed FROM Employee e RIGHT JOIN Administrator a ON e.employeeID = a.employeeID LEFT JOIN TroubleTicket t ON a.administratorID = t.assignedTo WHERE t.status = 'completed' GROUP BY e.employeeID"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "18": 
-                                query = "SELECT t.status, COUNT(CASE WHEN t.studentID IS NOT NULL THEN t.ticketID END) AS count_by_student, COUNT(CASE WHEN t.employeeID IS NOT NULL THEN t.ticketID END) AS count_by_customer_support FROM Ticket t GROUP BY t.status"
+                                query = "SELECT t.status, COUNT(CASE WHEN t.studentID IS NOT NULL THEN t.ticketID END) AS count_by_student, COUNT(CASE WHEN t.assignedTo IS NOT NULL THEN t.ticketID END) AS count_by_customer_support FROM TroubleTicket t GROUP BY t.status"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "19": 
-                                query = "SELECT AVG(DATEDIFF(t.dateClosed, t.dateLogged)) AS avg_ticket_duration FROM Ticket t"
+                                query = "SELECT AVG(DATEDIFF(t.dateCompleted, t.dateLogged)) AS avg_ticket_duration FROM TroubleTicket t"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "20":
-                                query = "SELECT (*) FROM Ticket t WHERE t.status = 'closed' ORDER BY t.ticketID"
+                                query = "SELECT * FROM TroubleTicket t WHERE t.status = 'completed' ORDER BY t.ticketID"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             #elif choiceFinal == "21": 
-
                             #elif choiceFinal == "22":
-
                             elif choiceFinal == "23":
-                                query = "SELECT b.title AS book_title, AVG(r.rating) AS overall_rating, COUNT(DISTINCT r.studentID) AS count_of_students_rated FROM Book b LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC, count_of_students_rated DESC"
+                                query = "SELECT b.title AS book_title, AVG(r.rating) AS overall_rating, COUNT(DISTINCT r.studentID) AS count_of_students_rated FROM Book b LEFT JOIN Review r ON b.ISBN_13 = r.ISBN_13 GROUP BY b.title ORDER BY overall_rating DESC, count_of_students_rated DESC"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             elif choiceFinal == "24":
-                                query = "SELECT b.title AS book_title, r.rating, s.firstName AS student_first_name, s.lastName AS student_last_name, u.name AS university_name FROM Book b LEFT JOIN Rating r ON b.ISBN_13 = r.ISBN_13 LEFT JOIN Student s ON r.studentID = s.studentID LEFT JOIN University u ON s.universityID = u.universityID WHERE r.rating = 5"
+                                query = "SELECT b.title AS book_title, r.rating, s.firstName AS student_first_name, s.lastName AS student_last_name, u.name AS university_name FROM Book b LEFT JOIN Review r ON b.ISBN_13 = r.ISBN_13 LEFT JOIN Student s ON r.studentID = s.studentID LEFT JOIN University u ON s.universityID = u.universityID WHERE r.rating = 5"
+                                cursor.execute(query)
+                                result = cursor.fetchall()
                             else:
                                 print("Please enter a valid number.")
 
                             cursor.execute(query)
                             result = cursor.fetchall()
                         
-                            print(f"Result for option {choice}:")
+                            print(f"Result for option {choiceFinal}:")
                             for row in result:
                                 print(row)
 
